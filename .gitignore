@@ -1,3 +1,18 @@
-__pycache__
-output
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.env
+.venv
+venv/
+
+# Editor settings
+.vscode/
+
+# Generated output
+output/
+
+# Temporary or source metadata files
 spr/*.txt
