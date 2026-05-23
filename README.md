@@ -42,6 +42,12 @@ python main.py
 - `output/sonolus_particle.png`
   - Sonolus 用にマージした最終出力画像
 
+4. 以下を実行することでこのパーティクルを含むscpファイルを生成できます。`config.json`を書き換えてから使用してください。
+
+```bash
+python scp_replace_texture_new.py
+```
+
 ## ラベル編集と追加出力
 
 `label_tool.py` を使って `spr/tex_note_common_all_v2_labels.json` の内容を確認・編集できます。
