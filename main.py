@@ -385,8 +385,9 @@ def merge_particle_to_sonolus(input_folder, sprite_json_path, output_path):
         print(f'警告: sprites 配列が見つかりません: {sprite_json_path}')
         return
 
-    canvas_width = max(sprite['x'] + sprite['w'] for sprite in sprites)
-    canvas_height = max(sprite['y'] + sprite['h'] for sprite in sprites)
+    # 固定キャンバスサイズ: Sonolus の仕様に合わせて 1024x1024 にする
+    canvas_width = 1024
+    canvas_height = 1024
     canvas = np.zeros((canvas_height, canvas_width, 4), dtype=np.uint8)
 
     for index, sprite in enumerate(sprites):
@@ -413,20 +414,31 @@ def merge_particle_to_sonolus(input_folder, sprite_json_path, output_path):
             continue
 
         x, y, w, h = int(sprite['x']), int(sprite['y']), int(sprite['w']), int(sprite['h'])
+        # 画像を指定サイズにリサイズ（配置領域に合わせる）
         if image.shape[1] != w or image.shape[0] != h:
             image = resize_image_to_target(image, (w, h), mode='linear')
 
-        region = canvas[y:y+h, x:x+w]
-        if region.shape != image.shape:
-            print(f'配置領域と画像サイズが一致しません: {image_path} {region.shape} != {image.shape}')
+        # キャンバスとの重なり領域を計算して、はみ出す部分は切り取って合成する
+        x0 = max(0, x)
+        y0 = max(0, y)
+        x1 = min(canvas_width, x + w)
+        y1 = min(canvas_height, y + h)
+        if x0 >= x1 or y0 >= y1:
+            print(f'配置領域がキャンバス外です: {image_path} at {(x,y,w,h)}')
             continue
 
-        src = image.astype(np.float32) / 255.0
-        dst = region.astype(np.float32) / 255.0
-        src_rgb = src[:, :, :3]
-        src_alpha = src[:, :, 3:4]
-        dst_rgb = dst[:, :, :3]
-        dst_alpha = dst[:, :, 3:4]
+        src_x0 = x0 - x
+        src_y0 = y0 - y
+        src_x1 = src_x0 + (x1 - x0)
+        src_y1 = src_y0 + (y1 - y0)
+
+        src_patch = image[src_y0:src_y1, src_x0:src_x1].astype(np.float32) / 255.0
+        dst_patch = canvas[y0:y1, x0:x1].astype(np.float32) / 255.0
+
+        src_rgb = src_patch[:, :, :3]
+        src_alpha = src_patch[:, :, 3:4]
+        dst_rgb = dst_patch[:, :, :3]
+        dst_alpha = dst_patch[:, :, 3:4]
 
         out_alpha = src_alpha + dst_alpha * (1.0 - src_alpha)
         safe_alpha = np.maximum(out_alpha, 1e-6)
@@ -435,7 +447,7 @@ def merge_particle_to_sonolus(input_folder, sprite_json_path, output_path):
         out_rgb[zero_mask] = 0.0
 
         blended = np.concatenate((out_rgb, out_alpha), axis=2)
-        canvas[y:y+h, x:x+w] = np.clip(blended * 255.0, 0, 255).astype(np.uint8)
+        canvas[y0:y1, x0:x1] = np.clip(blended * 255.0, 0, 255).astype(np.uint8)
 
     cv2.imwrite(output_path, canvas)
 
