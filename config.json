@@ -1,0 +1,21 @@
+{
+  "output_scp": "output/custom_particles.scp",
+
+  "template_name": "coconut-next-sekai-1",
+
+  "root_title": "RP Particle Pack",
+
+  "items": [
+    {
+      "target_name": "RP-particle",
+
+      "texture": "output/sonolus_particle.png",
+      "thumbnail": "my_thumb.png",
+
+      "source": "https://myserver.example",
+      "title": "RP Particle",
+      "subtitle": "Custom Effects",
+      "author": "1D4B42"
+    }
+  ]
+}

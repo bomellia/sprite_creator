@@ -361,9 +361,6 @@ def main() -> None:
         if mode == 'add':
             new_url = add_texture_file(temp_dir, texture_url, replacement_image)
             new_item = add_new_item_to_info(info_path, new_url, new_name=new_name)
-            
-            # list ファイルも更新
-            update_list_file(info_path, new_item, new_url)
 
             # テンプレートファイルをもとに要素名と同じファイルを作成
             if template_name:
