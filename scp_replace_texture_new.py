@@ -333,7 +333,8 @@ def process_item(
             data,
             target_name
         ),
-        template_name
+        template_name,
+        item_config
     )
 
 def find_root_info_file(extracted_root: str):
@@ -392,6 +393,119 @@ def update_root_info(
         )
 
         f.write('\n')
+
+def apply_description_override(
+    item_detail_data: dict,
+    item_config: dict
+):
+
+    if 'description' not in item_config:
+        return
+
+    item_detail_data['description'] = str(
+        item_config['description']
+    )
+
+    print(
+        'description updated'
+    )
+
+def apply_tag_overrides(
+    item: dict,
+    item_config: dict
+):
+
+    tags = item.get('tags')
+
+    if not isinstance(tags, list):
+        return
+
+    #
+    # heartHollow の数値変更
+    #
+
+    if 'likes' in item_config:
+
+        value = str(item_config['likes'])
+
+        found = False
+
+        for tag in tags:
+
+            if tag.get('icon') == 'heartHollow':
+
+                tag['title'] = value
+                found = True
+
+                break
+
+        if not found:
+
+            tags.append({
+                'title': value,
+                'icon': 'heartHollow'
+            })
+
+    #
+    # comment の数値変更
+    #
+
+    if 'comments' in item_config:
+
+        value = str(item_config['comments'])
+
+        found = False
+
+        for tag in tags:
+
+            if tag.get('icon') == 'comment':
+
+                tag['title'] = value
+                found = True
+
+                break
+
+        if not found:
+
+            tags.append({
+                'title': value,
+                'icon': 'comment'
+            })
+
+    #
+    # 「8月前」などの時間タグ変更
+    #
+
+    if 'time_text' in item_config:
+
+        value = str(item_config['time_text'])
+
+        replaced = False
+
+        for tag in tags:
+
+            #
+            # icon を持たないタグを時間タグ扱い
+            #
+
+            if 'icon' not in tag:
+
+                #
+                # #PINNED は除外
+                #
+
+                if tag.get('title', '').startswith('#'):
+                    continue
+
+                tag['title'] = value
+                replaced = True
+                break
+
+        if not replaced:
+
+            tags.append({
+                'title': value
+            })
 
 def apply_metadata_overrides(
     item: dict,
@@ -452,6 +566,11 @@ def apply_metadata_overrides(
             print(
                 f'warning: authorUser source not found for {target_author}'
             )
+
+        apply_tag_overrides(
+            item,
+            item_config
+        )
 
 def find_list_file(extracted_root: str):
 
@@ -640,7 +759,8 @@ def get_particles_dir(extracted_root: str):
 def create_item_detail_file(
     extracted_root: str,
     item: dict,
-    template_name: str
+    template_name: str,
+    item_config: dict
 ):
 
     particles_dir = get_particles_dir(
@@ -670,7 +790,22 @@ def create_item_detail_file(
 
         template_data = json.load(f)
 
-    template_data['item'] = copy.deepcopy(item)
+    #
+    # item 差し替え
+    #
+
+    template_data['item'] = copy.deepcopy(
+        item
+    )
+
+    #
+    # description 上書き
+    #
+
+    apply_description_override(
+        template_data,
+        item_config
+    )
 
     with open(
         output_path,

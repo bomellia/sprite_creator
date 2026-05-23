@@ -15,7 +15,12 @@
       "source": "https://myserver.example",
       "title": "RP Particle",
       "subtitle": "Custom Effects",
-      "author": "1D4B42"
+      "author": "1D4B42",
+
+      "likes": 114514,
+      "comments": 810,
+      "time_text": "364分前",
+      "description": "Rhythm Prismのオリジナルパーティクルです。"
     }
   ]
 }
